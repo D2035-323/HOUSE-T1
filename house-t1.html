@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>备案价计算器（T1）</title>
+    <style>
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; }
+        .input-group { margin: 10px 0; }
+        label { display: inline-block; width: 200px; }
+        input { width: 150px; padding: 5px; }
+        button { padding: 10px 20px; margin-top: 10px; }
+        .result { color: #2c3e50; font-weight: bold; }
+        .error { color: red; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>备案价计算器（T1）</h2>
+        
+        <!-- 输入区域 -->
+        <div class="input-group">
+            <label>总面积（㎡）:</label>
+            <input type="number" id="totalArea" step="0.01">
+        </div>
+        <div class="input-group">
+            <label>总价（元）:</label>
+            <input type="number" id="totalPrice">
+        </div>
+        <div class="input-group">
+            <label>总套数:</label>
+            <input type="number" id="totalUnits">
+        </div>
+        <div class="input-group">
+            <label>最低备案价（元/㎡）:</label>
+            <input type="number" id="minRecordPrice">
+        </div>
+        <div class="input-group">
+            <label>最低备案套数:</label>
+            <input type="number" id="minRecordUnits">
+        </div>
+
+        <button onclick="calculate()">开始计算</button>
+        <div id="errorMsg" class="error"></div>
+
+        <!-- 结果展示 -->
+        <h3>计算结果：</h3>
+        <div class="input-group">
+            <label>平均面积（㎡）:</label>
+            <input type="text" id="avgArea" readonly class="result">
+        </div>
+        <div class="input-group">
+            <label>平均单价（元/㎡）:</label>
+            <input type="text" id="avgPrice" readonly class="result">
+        </div>
+        <div class="input-group">
+            <label>最低备案总价:</label>
+            <input type="text" id="minTotalRecord" readonly class="result">
+        </div>
+        <div class="input-group">
+            <label>剩余套数:</label>
+            <input type="text" id="remainingUnits" readonly class="result">
+        </div>
+        <div class="input-group">
+            <label>最高备案总价:</label>
+            <input type="text" id="maxTotalRecord" readonly class="result">
+        </div>
+        <div class="input-group">
+            <label>最高备案价（元/㎡）:</label>
+            <input type="text" id="maxRecordPrice" readonly class="result">
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            // 清空错误提示
+            document.getElementById('errorMsg').innerHTML = '';
+
+            try {
+                // 获取输入值
+                const totalArea = parseFloat(document.getElementById('totalArea').value);
+                const totalPrice = parseFloat(document.getElementById('totalPrice').value);
+                const totalUnits = parseInt(document.getElementById('totalUnits').value);
+                const minRecordPrice = parseFloat(document.getElementById('minRecordPrice').value);
+                const minRecordUnits = parseInt(document.getElementById('minRecordUnits').value);
+
+                // 验证输入
+                if ([totalArea, totalPrice, totalUnits, minRecordPrice, minRecordUnits].some(v => isNaN(v))) {
+                    throw new Error("请填写所有必填项");
+                }
+
+                // 基础计算
+                const avgArea = totalArea / totalUnits;
+                const avgPrice = totalPrice / totalArea;
+                
+                // 进阶计算（修正部分）
+                const minTotalRecord = minRecordPrice * avgArea * minRecordUnits;  // 修正：加入平均面积
+                const remainingUnits = totalUnits - minRecordUnits;
+                const maxTotalRecord = totalPrice - minTotalRecord;
+                
+                // 增加安全验证
+                if (remainingUnits <= 0) throw new Error("剩余套数不能≤0");
+                if (avgArea <= 0) throw new Error("平均面积无效");
+
+                const maxRecordPrice = maxTotalRecord / (remainingUnits * avgArea);  // 修正：合并除法计算
+
+                // 显示结果
+                document.getElementById('avgArea').value = avgArea.toFixed(2);
+                document.getElementById('avgPrice').value = avgPrice.toFixed(2);
+                document.getElementById('minTotalRecord').value = minTotalRecord.toFixed(2);
+                document.getElementById('remainingUnits').value = remainingUnits;
+                document.getElementById('maxTotalRecord').value = maxTotalRecord.toFixed(2);
+                document.getElementById('maxRecordPrice').value = maxRecordPrice.toFixed(2);
+
+            } catch (error) {
+                document.getElementById('errorMsg').innerHTML = error.message;
+                // 清空异常结果
+                document.querySelectorAll('.result').forEach(el => el.value = '');
+            }
+        }
+    </script>
+</body>
+</html>
